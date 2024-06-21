@@ -1,0 +1,22 @@
+PATH
+  remote: .
+  specs:
+    slack_socket_mode_bot (0.9.0)
+      websocket (~> 1.2)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rake (13.1.0)
+    websocket (1.2.10)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  rake
+  slack_socket_mode_bot!
+
+BUNDLED WITH
+   2.6.0.dev

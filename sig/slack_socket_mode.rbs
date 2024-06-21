@@ -1,0 +1,13 @@
+module Slack
+  class SocketMode
+    VERSION: String
+  
+    def initialize: (token: String, ?app_token: String, ?num_of_connections: Integer, ?debug: boolean, ?logger: Logger) { (untyped) -> untyped } -> void
+  
+    def call: (String method, untyped data, ?token: String) -> untyped
+  
+    def step: -> [Array[IO], Array[IO]]
+  
+    def run: -> bot
+  end
+end
