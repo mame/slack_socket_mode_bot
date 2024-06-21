@@ -10,6 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "A simple wrapper library for Slack's Socket Mode API"
   spec.homepage = "https://github.com/mame/slack_socket_mode_bot"
+  spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
