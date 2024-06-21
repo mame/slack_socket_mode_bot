@@ -94,6 +94,9 @@ Connects to Slack with Socket Mode.
 * `logger`: A Logger instance (optional)
 * block: Handles events received from Slack
 
+Note: The block must return as soon as possible. Otherwise, the Slack server will re-send the event.
+If you want to do a time-consuming process, it is recommended that you do it in a sub thread.
+
 ### `SlackSocketModeBot#call(method, data, token:)`
 
 Calls Slack's [Web API](https://api.slack.com/methods), such as [chat.postMessage](https://api.slack.com/methods/chat.postMessage).
