@@ -19,6 +19,7 @@ class SlackSocketModeBot
     @conns = []
     @debug = debug
     @logger = logger
+    @events = {}
     num_of_connections.times { add_connection(callback) } if app_token
   end
 
@@ -65,25 +66,42 @@ class SlackSocketModeBot
 
         if @logger
           @logger.debug("[ws:#{ ws.object_id }] slack message: #{ JSON.generate(json) }")
-          msg = "slack #{ json[:type] }"
-          payload_type = json.dig(:payload, :type)
-          msg += " (#{ payload_type })" if payload_type
-          @logger.info("[ws:#{ ws.object_id }] " + msg)
         end
 
         case json[:type]
         when "hello"
-          @logger.info("[ws:#{ ws.object_id }] active connection count: #{ @conns.size }") if @logger
+          @logger.info("[ws:#{ ws.object_id }] hello (active connections: #{ @conns.size })") if @logger
         when "disconnect"
           ws.close
+          @logger.info("[ws:#{ ws.object_id }] disconnect (active connections: #{ @conns.size })") if @logger
         else
-          response = { envelope_id: json[:envelope_id] }
-          if json[:accepts_response_payload]
-            response[:payload] = callback.call(json)
-          else
-            callback.call(json)
+          payload = json[:payload]
+          if @logger
+            msg = "[ws:#{ ws.object_id }] #{ json[:type] } [##{ json[:retry_attempt] + 1 }] (#{
+              {
+                event_id: payload[:event_id],
+                event_time: Time.at(payload[:event_time]).strftime("%FT%T"),
+                type: payload[:type],
+              }.map {|k, v| "#{ k }: #{ v }" }.join(", ")
+            })"
+            @logger.info(msg)
           end
-          ws.send(JSON.generate(response))
+          expired = Time.now.to_i - 600
+          @events.reject! {|_, timestamp| timestamp < expired }
+
+          if @events[json[:payload][:event_id]]
+            # ignore
+          else
+            @events[json[:payload][:event_id]] = json[:payload][:event_time]
+
+            response = { envelope_id: json[:envelope_id] }
+            if json[:accepts_response_payload]
+              response[:payload] = callback.call(json)
+            else
+              callback.call(json)
+            end
+            ws.send(JSON.generate(response))
+          end
         end
       end
     end
