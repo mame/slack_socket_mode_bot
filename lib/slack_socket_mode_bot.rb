@@ -22,7 +22,10 @@ class SlackSocketModeBot
     @debug = debug
     @logger = logger
     @events = {}
-    num_of_connections.times { add_connection(callback) } if app_token
+    @callback = callback
+    # No app token: Web API calls only, no Socket Mode connections.
+    @num_of_connections = app_token ? num_of_connections : 0
+    replenish_connections
   end
 
   #: (String method, untyped data, ?token: String) -> untyped
@@ -46,6 +49,20 @@ class SlackSocketModeBot
     end
   end
 
+  private def replenish_connections
+    # Reopen from the main loop, tolerating a single failure; #step retries.
+    while @conns.size < @num_of_connections
+      begin
+        add_connection(@callback)
+      rescue => e
+        @logger.warn("[reconnect] failed: #{ e.message }") if @logger
+        break
+      end
+    end
+    # Fail loud rather than degrade silently once every connection is gone.
+    raise Error, "all socket connections lost" if @num_of_connections > 0 && @conns.empty?
+  end
+
   private def add_connection(callback)
     json = call("apps.connections.open", {}, token: @app_token)
 
@@ -56,13 +73,14 @@ class SlackSocketModeBot
       when :open
         @logger.info("[ws:#{ ws.object_id }] websocket open") if @logger
       when :close
+        # #step drops the dead connection; #replenish_connections reopens it.
         @logger.info("[ws:#{ ws.object_id }] websocket closed") if @logger
-        add_connection(callback)
       when :message
         begin
           json = JSON.parse(data, symbolize_names: true)
         rescue JSON::ParserError
-          add_connection(callback)
+          # A stray non-JSON frame: skip it, don't open a spurious connection.
+          @logger.warn("[ws:#{ ws.object_id }] received a non-JSON message; ignored") if @logger
           next
         end
 
@@ -118,6 +136,7 @@ class SlackSocketModeBot
   def step
     read_ios, write_ios = [], []
     @conns.select! {|ws| ws.step(read_ios, write_ios) }
+    replenish_connections
     return read_ios, write_ios
   end
 
