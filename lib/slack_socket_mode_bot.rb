@@ -79,14 +79,18 @@ class SlackSocketModeBot
         else
           payload = json[:payload]
           if @logger
-            msg = "[ws:#{ ws.object_id }] #{ json[:type] } [##{ json[:retry_attempt] + 1 }] (#{
-              {
-                event_id: payload[:event_id],
-                event_time: Time.at(payload[:event_time]).strftime("%FT%T"),
-                type: payload[:type],
-              }.map {|k, v| "#{ k }: #{ v }" }.join(", ")
-            })"
-            @logger.info(msg)
+            # Log a per-type identifier; event_id/retry only apply to events_api.
+            detail =
+              case json[:type]
+              when "events_api"   then [payload.dig(:event, :type), payload[:event_id]].compact.join(" ")
+              when "slash_commands" then payload[:command]
+              else payload[:type]
+              end
+            retry_n = json[:retry_attempt].to_i
+            line = "[ws:#{ ws.object_id }] #{ json[:type] }"
+            line += " #{ detail }" if detail && !detail.empty?
+            line += " (retry ##{ retry_n })" if retry_n > 0
+            @logger.info(line)
           end
           expired = Time.now.to_i - 600
           @events.reject! {|_, timestamp| timestamp < expired }
