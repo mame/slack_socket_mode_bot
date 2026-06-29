@@ -14,6 +14,19 @@ class SlackSocketModeBot
 
   API_BASE = "https://slack.com/api/"
 
+  # Internal signal: retry after `wait` seconds. Always caught in #call.
+  class Retry < StandardError
+    attr_reader :wait
+    def initialize(wait)
+      @wait = wait
+      super("retry after #{ wait }s")
+    end
+  end
+  private_constant :Retry
+
+  # Max seconds to sleep on a 429 Retry-After; #call may run in the event loop.
+  RETRY_AFTER_CAP = 60
+
   #: (token: String, ?app_token: String, ?num_of_connections: Integer, ?debug: boolean, ?logger: Logger) { (untyped) -> untyped } -> void
   def initialize(token:, app_token: nil, num_of_connections: 4, debug: false, logger: nil, &callback)
     @token = token
@@ -37,13 +50,30 @@ class SlackSocketModeBot
     retries = 0
     begin
       res = Net::HTTP.post(url, body, headers)
-      json = JSON.parse(res.body, symbolize_names: true)
-      raise Error, json[:error] unless json[:ok]
-      json
-    rescue Socket::ResolutionError
+
+      case res
+      when Net::HTTPSuccess
+        json = JSON.parse(res.body, symbolize_names: true)
+        raise Error, json[:error] unless json[:ok]
+        json
+      when Net::HTTPTooManyRequests
+        # Rejected, not processed: safe to retry after Retry-After seconds.
+        raise Retry, Integer(res["retry-after"] || retries + 1)
+      else
+        # 5xx etc.: may already be processed, so don't retry; just don't crash.
+        raise Error, "HTTP #{ res.code } #{ res.message }"
+      end
+    rescue Socket::ResolutionError, Net::OpenTimeout
+      # Never sent (DNS / connect failure): safe to retry.
       retries += 1
       raise if retries >= 3
       sleep 1
+      retry
+    rescue Retry => e
+      # Don't block the event loop on an absurdly long wait.
+      retries += 1
+      raise Error, "rate limited (retry-after: #{ e.wait }s)" if retries >= 3 || e.wait > RETRY_AFTER_CAP
+      sleep e.wait
       retry
     end
   end
