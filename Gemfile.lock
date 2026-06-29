@@ -7,14 +7,20 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    rake (13.1.0)
-    websocket (1.2.10)
+    drb (2.2.3)
+    minitest (6.0.6)
+      drb (~> 2.0)
+      prism (~> 1.5)
+    prism (1.9.0)
+    rake (13.4.2)
+    websocket (1.2.11)
 
 PLATFORMS
   ruby
   x86_64-linux
 
 DEPENDENCIES
+  minitest
   rake
   slack_socket_mode_bot!
 

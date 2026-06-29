@@ -1,0 +1,35 @@
+require_relative "helper"
+
+# Events API dispatch through the real SimpleWebSocket
+class DispatchTest < BotTest
+  def events_msg(event_id:, envelope_id:, accepts: false)
+    { type: "events_api", envelope_id: envelope_id, retry_attempt: 0,
+      accepts_response_payload: accepts,
+      payload: { type: "event_callback", event_id: event_id, event_time: Time.now.to_i,
+                 event: { type: "app_mention" } } }
+  end
+
+  def test_event_runs_handler_and_acks
+    connect(logger: CaptureLogger.new)
+    @slack.deliver(events_msg(event_id: "Ev1", envelope_id: "e1"))
+    pump
+    assert_equal 1, @calls.size
+    assert_equal [{ envelope_id: "e1" }], @slack.acks
+  end
+
+  def test_response_payload_returned_when_accepted
+    connect
+    @slack.deliver(events_msg(event_id: "Ev1", envelope_id: "e1", accepts: true))
+    pump
+    assert_equal [{ envelope_id: "e1", payload: { text: "hi" } }], @slack.acks
+  end
+
+  def test_duplicate_event_id_is_not_reprocessed
+    connect
+    @slack.deliver(events_msg(event_id: "Ev1", envelope_id: "e1"))
+    pump
+    @slack.deliver(events_msg(event_id: "Ev1", envelope_id: "e2"))
+    pump
+    assert_equal 1, @calls.size
+  end
+end
