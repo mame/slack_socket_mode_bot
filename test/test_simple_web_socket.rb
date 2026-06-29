@@ -30,7 +30,7 @@ class SimpleWebSocketTest < Minitest::Test
     TCPSocket.define_singleton_method(:new) { |*| :unused }
     client = @client
     OpenSSL::SSL::SSLSocket.define_singleton_method(:new) { |*| client }
-    SWS.new("wss://example.com/ws") { |*a| @events << a }
+    SWS.new("wss://slack.invalid/ws") { |*a| @events << a }
   ensure
     TCPSocket.define_singleton_method(:new, orig_tcp)
     OpenSSL::SSL::SSLSocket.define_singleton_method(:new, orig_ssl)
