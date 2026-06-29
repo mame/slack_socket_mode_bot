@@ -92,13 +92,15 @@ class SlackSocketModeBot
             line += " (retry ##{ retry_n })" if retry_n > 0
             @logger.info(line)
           end
+          # Only events_api has an event_id; dedup just those (others have none).
+          event_id = payload[:event_id]
           expired = Time.now.to_i - 600
           @events.reject! {|_, timestamp| timestamp < expired }
 
-          if @events[json[:payload][:event_id]]
+          if event_id && @events[event_id]
             # ignore
           else
-            @events[json[:payload][:event_id]] = json[:payload][:event_time]
+            @events[event_id] = payload[:event_time] if event_id
 
             response = { envelope_id: json[:envelope_id] }
             if json[:accepts_response_payload]
