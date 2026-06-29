@@ -97,19 +97,16 @@ class SlackSocketModeBot
           expired = Time.now.to_i - 600
           @events.reject! {|_, timestamp| timestamp < expired }
 
-          if event_id && @events[event_id]
-            # ignore
-          else
-            @events[event_id] = payload[:event_time] if event_id
+          # ACK every message; only skip the handler for a duplicate, else Slack resends.
+          duplicate = event_id && @events[event_id]
+          @events[event_id] = payload[:event_time] if event_id
 
-            response = { envelope_id: json[:envelope_id] }
-            if json[:accepts_response_payload]
-              response[:payload] = callback.call(json)
-            else
-              callback.call(json)
-            end
-            ws.send(JSON.generate(response))
+          response = { envelope_id: json[:envelope_id] }
+          unless duplicate
+            result = callback.call(json)
+            response[:payload] = result if json[:accepts_response_payload]
           end
+          ws.send(JSON.generate(response))
         end
       end
     end
