@@ -27,22 +27,24 @@ class SlackSocketModeBot
 
   #: (String method, untyped data, ?token: String) -> untyped
   def call(method, data, token: @token)
-    count = 0
+    url = URI(API_BASE + method)
+    body = JSON.generate(data)
+    headers = {
+      "Content-type" => "application/json; charset=utf-8",
+      "Authorization" => "Bearer " + token,
+    }
+
+    retries = 0
     begin
-      url = URI(API_BASE + method)
-      res = Net::HTTP.post(
-        url, JSON.generate(data),
-        "Content-type" => "application/json; charset=utf-8",
-        "Authorization" => "Bearer " + token,
-      )
+      res = Net::HTTP.post(url, body, headers)
       json = JSON.parse(res.body, symbolize_names: true)
       raise Error, json[:error] unless json[:ok]
       json
     rescue Socket::ResolutionError
+      retries += 1
+      raise if retries >= 3
       sleep 1
-      count += 1
-      retry if count < 3
-      raise
+      retry
     end
   end
 
