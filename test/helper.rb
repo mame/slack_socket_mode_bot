@@ -44,6 +44,15 @@ class FakeSlack
     @server.write(WebSocket::Frame::Outgoing::Server.new(version: @version, data: JSON.generate(obj), type: :text).to_s)
   end
 
+  # Send a frame whose payload is not valid JSON
+  def deliver_raw(text)
+    @server.write(WebSocket::Frame::Outgoing::Server.new(version: @version, data: text, type: :text).to_s)
+  end
+
+  def send_close
+    @server.write(WebSocket::Frame::Outgoing::Server.new(version: @version, data: "", type: :close).to_s)
+  end
+
   # Every ACK received so far, decoded
   def acks
     while (buf = @server.read_nonblock(4096, exception: false)) && buf != :wait_readable

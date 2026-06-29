@@ -77,4 +77,41 @@ class SimpleWebSocketTest < Minitest::Test
     @ws.step([], [])
     assert @events.any? { |e| e[0] == :close }
   end
+
+  def test_rejects_a_non_secure_scheme
+    assert_raises(RuntimeError) { SWS.new("ws://slack.invalid/ws") { } }
+  end
+
+  def test_binary_message_is_yielded
+    server_send("\x01\x02".b, type: :binary)
+    @ws.step([], [])
+    assert @events.any? { |e| e[0] == :message && e[2] == :binary }
+  end
+
+  # A dead socket (EOF) surfaces as a close and a falsy #step
+  def test_eof_yields_close_and_step_returns_false
+    @server.close
+    alive = @ws.step([], [])
+    assert_equal false, alive
+    assert @events.any? { |e| e[0] == :close }
+  end
+
+  def test_close_sends_a_close_frame
+    @ws.close
+    @ws.step([], []) # flush the buffered close frame
+    assert_equal :close, read_frame.type
+  end
+
+  # A name resolution failure is retried a few times, then re-raised
+  def test_resolution_error_is_retried_then_raised
+    attempts = 0
+    orig = TCPSocket.method(:new)
+    TCPSocket.define_singleton_method(:new) { |*| attempts += 1; raise Socket::ResolutionError, "dns" }
+    SWS.define_method(:sleep) { |*| } # don't actually wait between retries
+    assert_raises(Socket::ResolutionError) { SWS.new("wss://slack.invalid/ws") { } }
+    assert_equal 3, attempts
+  ensure
+    TCPSocket.define_singleton_method(:new, orig)
+    SWS.remove_method(:sleep)
+  end
 end
