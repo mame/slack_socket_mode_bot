@@ -3,6 +3,10 @@ require "json"
 require "socket"
 require "slack_socket_mode_bot"
 
+# Point the Web API at an unroutable host so a missed stub never reaches Slack
+SlackSocketModeBot.send(:remove_const, :API_BASE)
+SlackSocketModeBot::API_BASE = "https://slack.invalid/api/"
+
 # Real SimpleWebSocket over a socketpair, with only the transport and Web API stubbed
 
 class CaptureLogger
@@ -18,7 +22,7 @@ end
 
 # Stub apps.connections.open so #initialize makes no HTTP call
 class TestBot < SlackSocketModeBot
-  def call(*) = { url: "wss://example.com/ws" }
+  def call(*) = { url: "wss://slack.invalid/ws" }
 end
 
 # The Slack side of one connection
