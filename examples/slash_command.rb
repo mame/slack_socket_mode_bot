@@ -31,7 +31,7 @@ bot = SlackSocketModeBot.new(token: SLACK_BOT_TOKEN, app_token: SLACK_APP_TOKEN,
   #
   # See https://api.slack.com/apis/socket-mode#command in detail
 
-  if data[:type] = "slash_commands"
+  if data[:type] == "slash_commands"
     # You need to return a response payload.
     # This message will be only visible to the user that invoked the slash command.
     {
