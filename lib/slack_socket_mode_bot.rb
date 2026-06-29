@@ -12,6 +12,8 @@ require_relative "slack_socket_mode_bot/simple_web_socket"
 class SlackSocketModeBot
   class Error < StandardError; end
 
+  API_BASE = "https://slack.com/api/"
+
   #: (token: String, ?app_token: String, ?num_of_connections: Integer, ?debug: boolean, ?logger: Logger) { (untyped) -> untyped } -> void
   def initialize(token:, app_token: nil, num_of_connections: 4, debug: false, logger: nil, &callback)
     @token = token
@@ -27,7 +29,7 @@ class SlackSocketModeBot
   def call(method, data, token: @token)
     count = 0
     begin
-      url = URI("https://slack.com/api/" + method)
+      url = URI(API_BASE + method)
       res = Net::HTTP.post(
         url, JSON.generate(data),
         "Content-type" => "application/json; charset=utf-8",
