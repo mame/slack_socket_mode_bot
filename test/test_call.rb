@@ -48,4 +48,34 @@ class CallTest < Minitest::Test
     end
     assert_equal 3, calls
   end
+
+  # A 429 is retried after its Retry-After delay
+  def test_rate_limited_then_succeeds_waits_retry_after
+    bot = build_bot
+    queue = [res(Net::HTTPTooManyRequests, headers: { "retry-after" => "7" }),
+             res(Net::HTTPOK, body: '{"ok":true}')]
+    stub_post(->(*) { queue.shift }) do
+      assert_equal({ ok: true }, bot.call("x", {}))
+    end
+    assert_equal [7], @sleeps
+  end
+
+  # An absurd Retry-After gives up instead of sleeping
+  def test_rate_limited_with_huge_retry_after_raises_without_sleeping
+    bot = build_bot
+    stub_post(->(*) { res(Net::HTTPTooManyRequests, headers: { "retry-after" => "3600" }) }) do
+      assert_raises(SlackSocketModeBot::Error) { bot.call("x", {}) }
+    end
+    assert_empty @sleeps
+  end
+
+  # 5xx is not retried since it may already be processed
+  def test_server_error_raises_without_retry
+    bot = build_bot
+    calls = 0
+    stub_post(->(*) { calls += 1; res(Net::HTTPInternalServerError) }) do
+      assert_raises(SlackSocketModeBot::Error) { bot.call("x", {}) }
+    end
+    assert_equal 1, calls
+  end
 end
