@@ -64,22 +64,18 @@ bot.run
 ```
 
 ```
-$ ruby example/echo_bot.rb
+$ ruby examples/echo_bot.rb
 I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2560] websocket open
 I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2600] websocket open
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2560] slack hello
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2560] active connection count: 4
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2600] slack hello
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2600] active connection count: 4
 I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2640] websocket open
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2640] slack hello
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2640] active connection count: 4
 I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] websocket open
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] slack hello
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] active connection count: 4
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] slack events_api (event_callback)
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] slack events_api (event_callback)
-I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] slack events_api (event_callback)
+I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2560] hello (active connections: 4)
+I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2600] hello (active connections: 4)
+I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2640] hello (active connections: 4)
+I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] hello (active connections: 4)
+I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] events_api app_mention Ev08H3RABCDE
+I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] events_api app_mention Ev08H3RFGHIJ
+I, [20XX-XX-XXTXX:XX:XX.XXXXXX #XXXXXX]  INFO -- : [ws:2680] events_api app_mention Ev08H3RKLMNO
 ...
 ```
 
