@@ -110,6 +110,11 @@ This method returns the response as a JSON data.
 
 Starts the main loop of communication with Slack. This method does not return.
 
+On an unrecoverable error (for example, losing every connection and being unable
+to reopen any), this method raises an exception instead of silently continuing in
+a degraded state. Running your bot under a process supervisor such as systemd is
+recommended so that it is restarted when this happens.
+
 ### `SlackSocketModeBot#step`
 
 Proceeds with the communication one step.
